@@ -1032,7 +1032,7 @@ function bkLoad(date){
   if (!date) { BK.state = "idle"; bkRender(); return; }
   BK.state = "loading"; bkRender();
   const id = ++BK.req;
-  fetch(`${BOOKING_URL}?action=slots&date=${encodeURIComponent(date)}`)
+  fetch(`${BOOKING_URL}?action=slots&date=${encodeURIComponent(date)}&doctor=${encodeURIComponent(document.getElementById("bkDoctor").value)}`)
     .then(r => r.json())
     .then(j => { if (id !== BK.req) return; if (!j.ok) throw 0; BK.slots = j.slots || []; BK.state = "ready"; bkRender(); })
     .catch(() => { if (id !== BK.req) return; BK.state = "error"; bkRender(); });
@@ -1045,6 +1045,7 @@ function initBooking(){
   document.querySelectorAll(".bk-only").forEach(e => { e.hidden = false; });
   dateEl.min = limaDay(0); dateEl.max = limaDay(30);
   dateEl.addEventListener("change", () => { msg.textContent = ""; bkLoad(dateEl.value); });
+  document.getElementById("bkDoctor").addEventListener("change", () => { msg.textContent = ""; if (BK.date) bkLoad(BK.date); });
   box.addEventListener("click", e => { const b = e.target.closest(".slot"); if (!b) return; BK.time = b.dataset.t; msg.textContent = ""; bkRender(); });
   form.addEventListener("submit", e => {
     e.preventDefault();
@@ -1062,7 +1063,7 @@ function initBooking(){
         if (j.ok) {
           const when = `${fmtDate(data.date)}, ${fmtTime(data.time)}`;
           const svc = form.service.options[form.service.selectedIndex].text;
-          document.getElementById("bkSum").textContent = `${svc} · ${when}`;
+          document.getElementById("bkSum").textContent = `${svc} · ${when}${j.doctor ? " · " + j.doctor.replace(/^Dra\./, tr("Dra.", "Dr.")) : ""}`;
           document.getElementById("bkWa").href = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(tr(
             `Hola, soy ${name}. Agendé en la web una cita de ${svc} para el ${when}`,
             `Hello, this is ${name}. I booked a ${svc} appointment on the website for ${when}`))}`;

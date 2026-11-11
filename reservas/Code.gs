@@ -1,20 +1,27 @@
 /**
  * Bracy's Dental Studio · Reservas en línea
  * Google Apps Script que conecta el formulario de la web con Google Calendar
- * y avisa cada cita nueva por WhatsApp (CallMeBot) y por correo.
+ * (un calendario por doctor) y avisa cada cita nueva por WhatsApp (CallMeBot) y por correo.
  *
  * Se pega en https://script.google.com con la cuenta de Google del consultorio.
  * Los valores de CONFIG se editan ahí, no en la web: así la clave no queda pública.
  */
 
 const CONFIG = {
-  // 'primary' = calendario principal de la cuenta. Para otro calendario, pega su ID.
-  CALENDAR_ID: 'primary',
+  // Doctores que reciben citas. El nombre debe ser idéntico al de la lista "Doctor(a)" de la web.
+  // Cada uno tendrá su propio calendario, llamado "Citas · <nombre>". La función configurar() los crea.
+  DOCTORS: [
+    'Dra. Cristina López',
+    'Dr. Diego Zambrano',
+    'Dra. Samantha Iturraran',
+  ],
 
   // Duración de cada cita, en minutos.
   SLOT_MINUTES: 30,
 
-  // Horario por día: 0 = domingo … 6 = sábado. null = cerrado.
+  // Horario del consultorio por día: 0 = domingo … 6 = sábado. null = cerrado.
+  // Si un doctor no atiende un día u hora, crea en SU calendario un evento "No disponible":
+  // la web no ofrecerá esas horas para ese doctor.
   HOURS: {
     0: null,
     1: ['09:00', '20:00'],
@@ -41,13 +48,17 @@ const CONFIG = {
 
 const TZ = 'America/Lima';   // Perú, UTC-5 todo el año
 const OFFSET = '-05:00';
+const CAL_PREFIX = 'Citas · ';
 
 /* ---------- Entradas desde la web ---------- */
 
 function doGet(e) {
   try {
     const p = (e && e.parameter) || {};
-    if (p.action === 'slots') return json({ ok: true, slots: freeSlots(String(p.date || '')) });
+    if (p.action === 'slots') {
+      const slots = availability(String(p.date || ''), knownDoctor(p.doctor)).map(function (s) { return s.t; });
+      return json({ ok: true, slots: slots });
+    }
     return json({ ok: true, service: 'bracys-reservas' });
   } catch (err) {
     return json({ ok: false, error: 'server' });
@@ -60,14 +71,18 @@ function doPost(e) {
   if (d.website) return json({ ok: true });            // campo trampa: lo llenan los robots
 
   const name = clean(d.name, 80), phone = clean(d.phone, 25), service = clean(d.service, 60);
-  const doctor = clean(d.doctor, 60), note = clean(d.note, 300), lang = d.lang === 'en' ? 'en' : 'es';
+  const note = clean(d.note, 300), lang = d.lang === 'en' ? 'en' : 'es';
+  const wanted = knownDoctor(d.doctor);
   const date = String(d.date || ''), time = String(d.time || '');
   if (name.length < 3 || phone.replace(/\D/g, '').length < 7 || !service) return json({ ok: false, error: 'invalid' });
 
   const lock = LockService.getScriptLock();
   try { lock.waitLock(15000); } catch (err) { return json({ ok: false, error: 'busy' }); }
   try {
-    if (freeSlots(date).indexOf(time) === -1) return json({ ok: false, error: 'taken' });
+    const slot = availability(date, wanted).filter(function (s) { return s.t === time; })[0];
+    if (!slot) return json({ ok: false, error: 'taken' });
+    // Sin preferencia: se asigna al doctor libre con menos citas ese día.
+    const doctor = wanted || slot.free.sort(function (a, b) { return slot.load[a] - slot.load[b]; })[0];
 
     const start = new Date(date + 'T' + time + ':00' + OFFSET);
     const end = new Date(start.getTime() + CONFIG.SLOT_MINUTES * 60000);
@@ -76,19 +91,19 @@ function doPost(e) {
       'Paciente: ' + name,
       'Teléfono: ' + phone,
       'Servicio: ' + service,
-      'Doctor(a): ' + (doctor || 'Sin preferencia'),
+      'Doctor(a): ' + doctor + (wanted ? '' : ' (asignado, sin preferencia)'),
       'Idioma: ' + (lang === 'en' ? 'inglés' : 'español'),
     ];
     if (note) lines.push('Nota: ' + note);
 
-    calendar().createEvent('Cita: ' + name + ' · ' + service, start, end, {
+    doctorCalendar(doctor).createEvent('Cita: ' + name + ' · ' + service, start, end, {
       description: lines.join('\n') + '\n\nReservada desde la web.',
     });
 
     const msg = 'Nueva cita desde la web\n' + when + '\n' + lines.join('\n');
     notifyWhatsApp(msg);
-    notifyEmail('Nueva cita: ' + name + ' · ' + when, msg);
-    return json({ ok: true });
+    notifyEmail('Nueva cita: ' + name + ' · ' + doctor + ' · ' + when, msg);
+    return json({ ok: true, doctor: doctor });
   } catch (err) {
     return json({ ok: false, error: 'server' });
   } finally {
@@ -98,7 +113,11 @@ function doPost(e) {
 
 /* ---------- Horarios libres ---------- */
 
-function freeSlots(date) {
+/**
+ * Devuelve las horas reservables de un día: [{ t: 'HH:mm', free: [doctores libres], load: {doctor: n.º de eventos ese día} }].
+ * Con `doctor` solo mira su calendario; sin él, una hora vale si al menos un doctor está libre.
+ */
+function availability(date, doctor) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return [];
   const noon = new Date(date + 'T12:00:00' + OFFSET);
   if (isNaN(noon.getTime())) return [];
@@ -112,17 +131,45 @@ function freeSlots(date) {
   const close = new Date(date + 'T' + hours[1] + ':00' + OFFSET).getTime();
   if (close < earliest || open > latest) return [];
 
-  const busy = calendar().getEvents(new Date(open), new Date(close))
-    .filter(function (ev) { return !ev.isAllDayEvent(); })
-    .map(function (ev) { return [ev.getStartTime().getTime(), ev.getEndTime().getTime()]; });
+  const doctors = doctor ? [doctor] : CONFIG.DOCTORS;
+  const busy = {}, load = {};
+  doctors.forEach(function (name) {
+    busy[name] = doctorCalendar(name).getEvents(new Date(open), new Date(close))
+      .filter(function (ev) { return !ev.isAllDayEvent(); })
+      .map(function (ev) { return [ev.getStartTime().getTime(), ev.getEndTime().getTime()]; });
+    load[name] = busy[name].length;
+  });
 
   const step = CONFIG.SLOT_MINUTES * 60000, out = [];
   for (let t = open; t + step <= close; t += step) {
     if (t < earliest || t > latest) continue;
-    const taken = busy.some(function (b) { return b[0] < t + step && b[1] > t; });
-    if (!taken) out.push(Utilities.formatDate(new Date(t), TZ, 'HH:mm'));
+    const free = doctors.filter(function (name) {
+      return !busy[name].some(function (b) { return b[0] < t + step && b[1] > t; });
+    });
+    if (free.length) out.push({ t: Utilities.formatDate(new Date(t), TZ, 'HH:mm'), free: free, load: load });
   }
   return out;
+}
+
+/* ---------- Calendarios ---------- */
+
+/** Calendario del doctor. Lo busca por nombre ("Citas · Dra. …") y, si no existe, lo crea. */
+function doctorCalendar(name) {
+  const props = PropertiesService.getScriptProperties();
+  const key = 'cal:' + name;
+  const id = props.getProperty(key);
+  let cal = id ? CalendarApp.getCalendarById(id) : null;
+  if (!cal) {
+    cal = CalendarApp.getOwnedCalendarsByName(CAL_PREFIX + name)[0] ||
+          CalendarApp.createCalendar(CAL_PREFIX + name, { timeZone: TZ });
+    props.setProperty(key, cal.getId());
+  }
+  return cal;
+}
+
+function knownDoctor(v) {
+  const s = String(v == null ? '' : v).trim();
+  return CONFIG.DOCTORS.indexOf(s) === -1 ? '' : s;
 }
 
 /* ---------- Avisos ---------- */
@@ -144,19 +191,18 @@ function notifyEmail(subject, body) {
 
 /* ---------- Utilidades ---------- */
 
-function calendar() {
-  return CONFIG.CALENDAR_ID === 'primary' ? CalendarApp.getDefaultCalendar() : CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
-}
 function clean(v, max) { return String(v == null ? '' : v).replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, max); }
 function json(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
 
 /**
- * Ejecuta esta función una vez desde el editor (botón ▶ Ejecutar) para dar los permisos
- * y comprobar que el aviso llega al WhatsApp y al correo.
+ * Ejecuta esta función una vez desde el editor (botón ▶ Ejecutar): pide los permisos,
+ * crea un calendario por doctor y envía un aviso de prueba al WhatsApp y al correo.
  */
-function probarAviso() {
-  calendar().getName();
+function configurar() {
+  const names = CONFIG.DOCTORS.map(function (name) { return doctorCalendar(name).getName(); });
+  Logger.log('Calendarios listos: ' + names.join(' | '));
   const msg = 'Prueba de avisos de Bracy\'s Dental Studio. Si lees esto, las reservas de la web ya pueden avisarte.';
   notifyWhatsApp(msg);
   notifyEmail('Prueba de avisos · reservas web', msg);
+  Logger.log('Aviso de prueba enviado. Revisa el WhatsApp y el correo.');
 }
