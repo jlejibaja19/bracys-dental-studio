@@ -57,7 +57,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opac
 .overlay{position:fixed;inset:0;z-index:25;background:rgba(255,255,255,.86);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
   display:flex;flex-direction:column;justify-content:center;padding:6rem 2rem 3rem;gap:.4rem;opacity:0;pointer-events:none;transition:opacity .6s var(--ease)}
 .menu-open .overlay{opacity:1;pointer-events:auto}
-.overlay a:nth-child(8){transition-delay:.42s}
+.overlay a:nth-child(8){transition-delay:.42s}.overlay a:nth-child(9){transition-delay:.48s}
+.overlay a[hidden]{display:none}
 .overlay a{font-family:"Cormorant Garamond",serif;font-size:clamp(1.9rem,5.2vh,2.6rem);color:var(--navy);transform:translateY(2.5rem);opacity:0;transition:transform .8s var(--ease),opacity .8s var(--ease)}
 .menu-open .overlay a{transform:none;opacity:1}
 .overlay a:nth-child(2){transition-delay:.06s}.overlay a:nth-child(3){transition-delay:.12s}.overlay a:nth-child(4){transition-delay:.18s}.overlay a:nth-child(5){transition-delay:.24s}.overlay a:nth-child(6){transition-delay:.3s}.overlay a:nth-child(7){transition-delay:.36s}
@@ -73,6 +74,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opac
 .btn-primary:hover{background:var(--navy-d)}
 .btn-ghost{background:transparent;color:var(--navy);box-shadow:inset 0 0 0 1px rgba(31,58,95,.18)}
 .btn-ghost .ic{background:var(--ivory-2)}
+.btn[hidden]{display:none}
 .btn-sm{padding:.4rem .4rem .4rem 1.1rem;font-size:.85rem}
 .btn-sm .ic{width:2rem;height:2rem}
 .btn svg{width:18px;height:18px}
@@ -307,6 +309,32 @@ footer{padding:4rem 0 3rem;background:var(--ivory);position:relative;z-index:2}
 @media (max-width:1024px){.pillars{grid-template-columns:1fr 1fr}}
 @media (max-width:768px){.mv-grid,.pillars{grid-template-columns:1fr}.mv-card .core{padding:2rem 1.6rem}}
 
+/* online booking */
+.book{background:var(--white)}
+.book-core{padding:2.4rem}
+.bk-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem 1.2rem}
+.bk-grid .full{grid-column:1/-1}
+.fld{display:flex;flex-direction:column;gap:.45rem;min-width:0}
+.fld label,.fld .lbl{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--navy)}
+.fld input,.fld select,.fld textarea{font:inherit;font-size:1rem;color:var(--ink);background:var(--ivory);border:0;border-radius:14px;padding:.85rem 1rem;box-shadow:inset 0 0 0 1px var(--line);outline:0;width:100%;min-height:3rem;transition:box-shadow .4s var(--ease)}
+.fld textarea{resize:vertical;min-height:5rem}
+.fld input:focus,.fld select:focus,.fld textarea:focus{box-shadow:inset 0 0 0 2px var(--gold)}
+.slots{display:flex;flex-wrap:wrap;gap:.5rem;min-height:3rem;align-items:center}
+.slots .hint{color:var(--muted);font-size:.92rem}
+.slot{border:0;font:600 .85rem "Plus Jakarta Sans",sans-serif;padding:.65rem .95rem;border-radius:999px;background:var(--ivory);color:var(--navy);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;font-variant-numeric:tabular-nums;transition:background .4s var(--ease),color .4s var(--ease)}
+.slot.on{background:var(--navy);color:#fff}
+.bk-foot{display:flex;flex-wrap:wrap;align-items:center;gap:1rem 1.4rem;margin-top:1.8rem}
+.bk-foot .btn[disabled]{opacity:.55;cursor:progress}
+.bk-msg{font-size:.92rem;color:var(--terra-d);font-weight:500}
+.bk-note{font-size:.78rem;color:#8A93A1;margin-top:1.1rem}
+.bk-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.bk-done{text-align:center;padding:1.5rem 0;display:flex;flex-direction:column;align-items:center;gap:1rem}
+.bk-done .ok{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--navy);box-shadow:0 0 0 10px rgba(31,58,95,.08)}
+.bk-done h3{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:2.2rem;color:var(--navy);line-height:1.05}
+.bk-done p{color:var(--muted);max-width:30rem}
+.bk-done .sum{font-weight:600;color:var(--navy)}
+@media (max-width:768px){.bk-grid{grid-template-columns:1fr}.book-core{padding:1.5rem}.bk-foot .btn{width:100%;justify-content:space-between}}
+
 /* language switch */
 .lang{display:inline-flex;flex:none;padding:.2rem;border-radius:999px;background:var(--ivory);box-shadow:inset 0 0 0 1px var(--line)}
 .lang button{border:0;background:transparent;font:700 .72rem "Plus Jakarta Sans",sans-serif;letter-spacing:.1em;color:var(--muted);padding:.45rem .7rem;border-radius:999px;cursor:pointer;transition:background .5s var(--ease),color .5s var(--ease)}
@@ -380,6 +408,7 @@ footer{padding:4rem 0 3rem;background:var(--ivory);position:relative;z-index:2}
   <a href="#nosotros">Por qué elegirnos</a>
   <a href="#mision">Misión y visión</a>
   <a href="#equipo">Nuestro equipo</a>
+  <a href="#agendar" class="bk-only" hidden>Agendar en línea</a>
   <a href="#visitanos">Ubicación y horarios</a>
   <a href="#" class="wa" data-msg="Hola Bracy’s Dental Studio, quisiera reservar una cita.">Reservar por WhatsApp</a>
 </nav>
@@ -395,6 +424,8 @@ footer{padding:4rem 0 3rem;background:var(--ivory);position:relative;z-index:2}
       <div class="ctas rv d3">
         <a class="btn btn-primary wa" href="#" data-msg="Hola Bracy’s Dental Studio, quisiera reservar una cita.">Reservar por WhatsApp
           <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.2.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3c-.2.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3 1.8.8 2.5.8 3.4.7.6-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.3Z"/></svg></span></a>
+        <a class="btn btn-ghost bk-only" href="#agendar" hidden>Agendar en línea
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg></span></a>
         <a class="btn btn-ghost" href="#servicios">Ver servicios
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></a>
       </div>
@@ -643,6 +674,63 @@ footer{padding:4rem 0 3rem;background:var(--ivory);position:relative;z-index:2}
   </div>
 </section>
 
+<!-- ONLINE BOOKING (se muestra solo cuando BOOKING_URL está configurado) -->
+<section class="sec book" id="agendar" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="eyebrow rv"><i></i>Agenda en línea</span>
+      <h2 class="rv d1">Elige tu horario, <em class="serif">nosotros lo reservamos.</em></h2></div>
+      <p class="rv d2">Selecciona el día y la hora que prefieras. Tu cita queda registrada al instante en la agenda del consultorio.</p>
+    </div>
+    <div class="shell rv"><div class="core book-core">
+      <form id="bkForm" novalidate>
+        <div class="bk-grid">
+          <div class="fld"><label for="bkName">Nombre y apellido</label><input id="bkName" name="name" type="text" autocomplete="name" maxlength="80" required></div>
+          <div class="fld"><label for="bkPhone">Celular o WhatsApp</label><input id="bkPhone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="25" placeholder="+51 9XX XXX XXX" required></div>
+          <div class="fld"><label for="bkService">Servicio</label>
+            <select id="bkService" name="service" required>
+              <option value="Evaluación general">Evaluación general</option>
+              <option value="Profilaxis">Profilaxis</option>
+              <option value="Exodoncias">Exodoncias</option>
+              <option value="Endodoncias">Endodoncias</option>
+              <option value="Prótesis totales">Prótesis totales</option>
+              <option value="Rehabilitación oral">Rehabilitación oral</option>
+              <option value="Ortodoncia">Ortodoncia</option>
+              <option value="Implantes">Implantes</option>
+              <option value="Odontopediatría">Odontopediatría</option>
+              <option value="Estética">Estética</option>
+            </select></div>
+          <div class="fld"><label for="bkDoctor">Doctor(a)</label>
+            <select id="bkDoctor" name="doctor">
+              <option value="">Sin preferencia</option>
+              <option value="Dra. Cristina López">Dra. Cristina López</option>
+              <option value="Dr. Diego Zambrano">Dr. Diego Zambrano</option>
+              <option value="Dra. Samantha Iturraran">Dra. Samantha Iturraran</option>
+            </select></div>
+          <div class="fld"><label for="bkDate">Día</label><input id="bkDate" name="date" type="date" required></div>
+          <div class="fld"><span class="lbl" id="bkSlotsLbl">Hora</span>
+            <div class="slots" id="bkSlots" role="group" aria-labelledby="bkSlotsLbl"><span class="hint">Elige primero el día.</span></div></div>
+          <div class="fld full"><label for="bkNote">Cuéntanos qué necesitas (opcional)</label><textarea id="bkNote" name="note" maxlength="300" rows="2"></textarea></div>
+        </div>
+        <input class="bk-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="bk-foot">
+          <button class="btn btn-primary" type="submit" id="bkSubmit">Confirmar cita
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></button>
+          <span class="bk-msg" id="bkMsg" role="status" aria-live="polite"></span>
+        </div>
+        <p class="bk-note">Usamos tus datos solo para gestionar tu cita.</p>
+      </form>
+      <div class="bk-done" id="bkDone" hidden>
+        <span class="ok"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#E7D8B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <h3>¡Cita registrada!</h3>
+        <p class="sum" id="bkSum"></p>
+        <p>Te esperamos en Jr. Fanning 280. Si necesitas cambiar o cancelar tu cita, escríbenos por WhatsApp.</p>
+        <a class="btn btn-ghost btn-sm" id="bkWa" href="#" target="_blank" rel="noopener">Escribir por WhatsApp<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 17 17 7M9 7h8v8"/></svg></span></a>
+      </div>
+    </div></div>
+  </div>
+</section>
+
 <!-- VISIT -->
 <section class="sec visit" id="visitanos">
   <div class="wrap">
@@ -715,6 +803,9 @@ background:repeating-linear-gradient(0deg,transparent 0 46px,rgba(31,58,95,.05) 
 <script>
 /* ===== CONFIGURACIÓN: edita aquí ===== */
 const WHATSAPP = "51967989376";
+// Reserva en línea: pega aquí la URL de la app web de Google Apps Script (termina en /exec).
+// Mientras esté vacía, la sección "Agenda en línea" no se muestra.
+let BOOKING_URL = "";
 // ⚠️ CONFIRMAR horarios reales antes de publicar. [día, apertura, cierre] — null = cerrado
 const HORARIO = [
   ["Domingo", null, null],
@@ -823,6 +914,16 @@ const EN = {
   "“Mi compromiso es ofrecer un servicio odontológico de primer nivel, basado en la confianza y la calidad.”":"“My commitment is to offer first-class dental care, built on trust and quality.”",
   "“Detrás de una sonrisa sana hay un cuidado dedicado; me comprometo a acompañarte en cada paso de tu salud bucal.”":"“Behind every healthy smile there is dedicated care; I’m committed to being with you at every step of your oral health.”",
   "Agendar cita":"Book a visit",
+  // reserva en línea
+  "Agenda en línea":"Book online","Agendar en línea":"Book online","Elige tu horario,":"Pick your time,","nosotros lo reservamos.":"we’ll hold it for you.",
+  "Selecciona el día y la hora que prefieras. Tu cita queda registrada al instante en la agenda del consultorio.":"Choose the day and time you prefer. Your appointment is saved instantly in the clinic’s calendar.",
+  "Nombre y apellido":"Full name","Celular o WhatsApp":"Mobile or WhatsApp","Servicio":"Service","Evaluación general":"General check-up",
+  "Doctor(a)":"Dentist","Sin preferencia":"No preference","Dra. Cristina López":"Dr. Cristina López","Dr. Diego Zambrano":"Dr. Diego Zambrano","Dra. Samantha Iturraran":"Dr. Samantha Iturraran",
+  "Día":"Day","Hora":"Time","Cuéntanos qué necesitas (opcional)":"Tell us what you need (optional)","Confirmar cita":"Confirm appointment",
+  "Usamos tus datos solo para gestionar tu cita.":"We use your details only to manage your appointment.",
+  "¡Cita registrada!":"Appointment booked!",
+  "Te esperamos en Jr. Fanning 280. Si necesitas cambiar o cancelar tu cita, escríbenos por WhatsApp.":"We’ll see you at Jr. Fanning 280. If you need to change or cancel your appointment, message us on WhatsApp.",
+  "Escribir por WhatsApp":"Message on WhatsApp",
   // ubicación
   "Te esperamos en el":"Visit us in","centro de Iquitos.":"downtown Iquitos.",
   "Iquitos, Perú":"Iquitos, Peru","Abrir en Google Maps":"Open in Google Maps","Dirección":"Address","Iquitos, Loreto · Perú":"Iquitos, Loreto · Peru",
@@ -900,7 +1001,7 @@ function setLang(l, save){
   document.title = META[LANG].title;
   document.querySelector('meta[name="description"]').content = META[LANG].desc;
   document.querySelectorAll(".lang button").forEach(b => { const on = b.dataset.lang === LANG; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
-  setWA(); renderHours();
+  setWA(); renderHours(); bkRender();
   if (save) { try{ localStorage.setItem("bracys-lang", LANG); }catch(e){} }
 }
 document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
@@ -911,6 +1012,72 @@ document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click
   if (l !== "es" && l !== "en") l = /^es/i.test(navigator.language || "es") ? "es" : "en";
   setLang(l, false);
 })();
+
+/* ===== RESERVA EN LÍNEA (Google Calendar vía Apps Script) ===== */
+var BK = { slots: null, time: "", date: "", state: "idle", req: 0 };
+function tr(es, en){ return LANG === "en" ? en : es; }
+function fmtTime(t){ let [h,m] = t.split(":").map(Number); const en = LANG === "en"; const p = h>=12?(en?"PM":"p. m."):(en?"AM":"a. m."); h = h%12||12; return `${h}:${String(m).padStart(2,"0")} ${p}`; }
+function fmtDate(d){ try{ return new Date(d + "T12:00:00").toLocaleDateString(LANG === "en" ? "en-US" : "es-PE", { weekday:"long", day:"numeric", month:"long" }); }catch(e){ return d; } }
+function limaDay(plus){ return new Date(Date.now() + plus*86400000).toLocaleDateString("en-CA", { timeZone: "America/Lima" }); }
+function bkRender(){
+  const box = document.getElementById("bkSlots"); if (!box || !BK) return;
+  if (BK.state === "idle") box.innerHTML = `<span class="hint">${tr("Elige primero el día.","Pick a day first.")}</span>`;
+  else if (BK.state === "loading") box.innerHTML = `<span class="hint">${tr("Buscando horarios libres…","Looking for free times…")}</span>`;
+  else if (BK.state === "error") box.innerHTML = `<span class="hint">${tr("No pudimos cargar los horarios. Intenta otra vez o escríbenos por WhatsApp.","We couldn’t load the times. Try again or message us on WhatsApp.")}</span>`;
+  else if (!BK.slots.length) box.innerHTML = `<span class="hint">${tr("No hay horarios libres ese día. Prueba con otro.","No free times that day. Try another one.")}</span>`;
+  else box.innerHTML = BK.slots.map(t => `<button type="button" class="slot${t===BK.time?" on":""}" data-t="${t}" aria-pressed="${t===BK.time}">${fmtTime(t)}</button>`).join("");
+}
+function bkLoad(date){
+  BK.date = date; BK.time = ""; BK.slots = null;
+  if (!date) { BK.state = "idle"; bkRender(); return; }
+  BK.state = "loading"; bkRender();
+  const id = ++BK.req;
+  fetch(`${BOOKING_URL}?action=slots&date=${encodeURIComponent(date)}`)
+    .then(r => r.json())
+    .then(j => { if (id !== BK.req) return; if (!j.ok) throw 0; BK.slots = j.slots || []; BK.state = "ready"; bkRender(); })
+    .catch(() => { if (id !== BK.req) return; BK.state = "error"; bkRender(); });
+}
+function initBooking(){
+  if (!BOOKING_URL) return;
+  const form = document.getElementById("bkForm"), msg = document.getElementById("bkMsg"), btn = document.getElementById("bkSubmit");
+  const dateEl = document.getElementById("bkDate"), box = document.getElementById("bkSlots");
+  document.getElementById("agendar").hidden = false;
+  document.querySelectorAll(".bk-only").forEach(e => { e.hidden = false; });
+  dateEl.min = limaDay(0); dateEl.max = limaDay(30);
+  dateEl.addEventListener("change", () => { msg.textContent = ""; bkLoad(dateEl.value); });
+  box.addEventListener("click", e => { const b = e.target.closest(".slot"); if (!b) return; BK.time = b.dataset.t; msg.textContent = ""; bkRender(); });
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const f = new FormData(form), name = (f.get("name")||"").trim(), phone = (f.get("phone")||"").trim();
+    if (name.length < 3) { msg.textContent = tr("Escribe tu nombre y apellido.","Please enter your full name."); form.name.focus(); return; }
+    if (phone.replace(/\D/g,"").length < 7) { msg.textContent = tr("Escribe un número de celular válido.","Please enter a valid phone number."); form.phone.focus(); return; }
+    if (!BK.date) { msg.textContent = tr("Elige el día de tu cita.","Please pick a day."); dateEl.focus(); return; }
+    if (!BK.time) { msg.textContent = tr("Elige una hora disponible.","Please pick an available time."); return; }
+    const data = { action:"book", name, phone, service:f.get("service"), doctor:f.get("doctor"), date:BK.date, time:BK.time, note:(f.get("note")||"").trim(), lang:LANG, website:f.get("website") };
+    btn.disabled = true; msg.textContent = tr("Registrando tu cita…","Booking your appointment…");
+    fetch(BOOKING_URL, { method:"POST", body: JSON.stringify(data) })
+      .then(r => r.json())
+      .then(j => {
+        btn.disabled = false;
+        if (j.ok) {
+          const when = `${fmtDate(data.date)}, ${fmtTime(data.time)}`;
+          const svc = form.service.options[form.service.selectedIndex].text;
+          document.getElementById("bkSum").textContent = `${svc} · ${when}`;
+          document.getElementById("bkWa").href = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(tr(
+            `Hola, soy ${name}. Agendé en la web una cita de ${svc} para el ${when}`,
+            `Hello, this is ${name}. I booked a ${svc} appointment on the website for ${when}`))}`;
+          form.hidden = true; document.getElementById("bkDone").hidden = false;
+        } else if (j.error === "taken") {
+          msg.textContent = tr("Esa hora se acaba de ocupar. Elige otra, por favor.","That time was just taken. Please pick another one.");
+          bkLoad(BK.date);
+        } else if (j.error === "invalid") {
+          msg.textContent = tr("Revisa tu nombre y tu número de celular.","Please check your name and phone number.");
+        } else { throw 0; }
+      })
+      .catch(() => { btn.disabled = false; msg.textContent = tr("No pudimos registrar tu cita. Intenta otra vez o escríbenos por WhatsApp.","We couldn’t book your appointment. Try again or message us on WhatsApp."); });
+  });
+}
+initBooking();
 
 // Mapa real de Google en el hosting (la tarjeta queda como respaldo donde no se permite incrustar)
 (function(){ try{
